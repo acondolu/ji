@@ -1,0 +1,19 @@
+{
+  "name": "iosjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "prettier": "^2.8.8",
+    "typescript": "^5.1.6",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prettier": "prettier --write src/*.ts"
+  },
+  "author": "",
+  "license": "ISC"
+}

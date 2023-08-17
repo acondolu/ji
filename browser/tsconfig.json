@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "AMD",
+    "lib": ["dom", "es2017"],
+    "outDir": "../static",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "removeComments": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+}
