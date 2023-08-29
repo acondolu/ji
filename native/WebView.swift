@@ -11,7 +11,7 @@ private class Ctrl: NSObject, WKScriptMessageHandler {
     }
     
     func send(command: Command<Browser>) {
-        print("send \(command)")
+        print("SEND \(command)")
         self.webView.evaluateJavaScript("document.dispatchEvent(new CustomEvent('jirecv', { detail: \(encodeOr(command: command)) }));")
     }
     

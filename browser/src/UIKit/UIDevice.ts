@@ -1,7 +1,7 @@
 // https://developer.apple.com/documentation/uikit/uidevice
 
 import { NSObject } from "../ObjectiveC/NSObject";
-import { foreign } from "../Foreign";
+import { call } from "../Foreign";
 
 /**
  * A representation of the current device.
@@ -11,7 +11,7 @@ export class UIDevice extends NSObject {
    * The model of the device.
    */
   get model() {
-    return foreign.call({ "UIKit_UIDevice_current_model_get": {} });
+    return call({ "UIKit_UIDevice_current_model_get": {} });
   }
 
   // Getting the device battery state
@@ -21,7 +21,7 @@ export class UIDevice extends NSObject {
    */
   isBatteryMonitoringEnabled = {
     set(value: boolean): Promise<boolean> {
-      return foreign.call({ "UIKit_UIDevice_current_isBatteryMonitoringEnabled_set": { value } });
+      return call({ "UIKit_UIDevice_current_isBatteryMonitoringEnabled_set": { value } });
     },
   };
 
@@ -29,7 +29,7 @@ export class UIDevice extends NSObject {
    * The battery charge level for the device.
    */
   get batteryLevel() {
-    return foreign.call({ "UIKit_UIDevice_current_batteryLevel_get": {} });
+    return call({ "UIKit_UIDevice_current_batteryLevel_get": {} });
   }
 }
 

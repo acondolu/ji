@@ -6,10 +6,10 @@ export type Return<T> =
   | { Void: {} }
   | { Null: {} }
   | { RetError: { reason: string } }
-  | { RetBool: { b: boolean}}
+  | { RetBool: { b: boolean } }
   | { RetInt: { n: number } }
   | { String: { s: string } }
-  | { Float: {f: number } };
+  | { Float: { f: number } };
 
 export type Browser = {
   Action: BrowserAction;
@@ -24,15 +24,11 @@ export type Native = {
 export type BrowserAction = { alert: { message: string } };
 
 export type NativeAction =
-| { hello: { version: number } }
-| { free: { id: number } }
-| { exit: { code: number } }
-| { UIKit_UIDevice_current_model_get: {} }
-| { UIKit_UIDevice_current_batteryLevel_get: {} }
-| { UIKit_UIDevice_current_isBatteryMonitoringEnabled_set: { value: boolean } }
-
-export interface ForeignInterface {
-  hello(): Promise<number>;
-  call(msg: NativeAction): Promise<any>;
-  log(message: string): void;
-}
+  | { hello: { version: number } }
+  | { free: { id: number } }
+  | { exit: { code: number } }
+  | { UIKit_UIDevice_current_model_get: {} }
+  | { UIKit_UIDevice_current_batteryLevel_get: {} }
+  | {
+      UIKit_UIDevice_current_isBatteryMonitoringEnabled_set: { value: boolean };
+    };
