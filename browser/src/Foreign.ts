@@ -5,14 +5,9 @@ import {
   Browser,
   Return,
   ForeignInterface,
-} from "./types.d";
+} from "./Types";
 
 declare const FinalizationRegistry: any | undefined;
-const postMessage: ((value: string) => void) | undefined =
-  // = (window as any).webkit?.messageHandlers?.nativeCallback?.postMessage;
-  (window as any)["ji"]["postMessage"];
-
-const remoteLog = (window as any)["ji"]["remoteLog"];
 
 const VERSION = 0;
 
@@ -24,11 +19,20 @@ class Foreign implements ForeignInterface {
     number,
     { resolve: (value: any) => void; reject: (reason: any) => void }
   >;
+  private postMessage: (value: string) => void;
+  private remoteLog: (message: string) => void;
 
   constructor() {
-    if (!postMessage) {
+    this.postMessage = value => (window as any).webkit?.messageHandlers?.nativeCallback?.postMessage(value);
+    if (!(window as any).webkit?.messageHandlers?.nativeCallback?.postMessage) {
       throw Error(
         "Unsupported: window.webkit.messageHandlers.nativeCallback.postMessage"
+      );
+    }
+    this.remoteLog = message => (window as any).webkit?.messageHandlers?.nativeLogger?.postMessage(message);
+    if (!(window as any).webkit?.messageHandlers?.nativeLogger?.postMessage) {
+      throw Error(
+        "Unsupported: window.webkit.messageHandlers.nativeLogger.postMessage"
       );
     }
     if (!FinalizationRegistry) {
@@ -37,7 +41,6 @@ class Foreign implements ForeignInterface {
     this.ffi_registry = new FinalizationRegistry(async (id: number) => {
       await this.call({ free: { id } });
     });
-    (window as any)["ji"]["got"] = (x: Command<Browser>) => this.recv(x);
     this.rpcs = new Map();
   }
 
@@ -126,24 +129,50 @@ class Foreign implements ForeignInterface {
 
   private send(cmd: Command<Native>) {
     this.log(JSON.stringify(cmd));
-    return postMessage!(JSON.stringify(cmd));
+    document.write((window as any).webkit?.messageHandlers?.nativeCallback?.postMessage);
+    return this.postMessage(JSON.stringify(cmd));
   }
 
   log(message: string) {
-    if (remoteLog) {
-      return remoteLog(message);
-    }
+    return this.remoteLog(message);
+  }
+
+  hello(): Promise<number> {
+    document.addEventListener("jirecv", (e: CustomEvent) => {
+      // this.log(`${e}`);
+      this.recv(e.detail);
+    }, false);
+    return this.call({ hello: { version: VERSION } });
   }
 }
 
-export const foreign: ForeignInterface = new Foreign();
+export let error: Error = null;
+function mkForeign(): ForeignInterface | null {
+  try {
+    return new Foreign();
+  } catch (e) {
+    error = e;
+    return null;
+  }
+}
+
+function withForeign<T>(act: (foreign: ForeignInterface) => Promise<T>): Promise<T> {
+  if (foreign) {
+    return act(foreign);
+  } else {
+    return Promise.reject(new Error(`ji: not available (${error.toString()})`));
+  }
+}
+
+
+export const foreign: ForeignInterface | null = mkForeign();
 
   /**
    * Begin handshake with native app.
    * Will exchange and compare the version numbers.
    */
   export function hello(): Promise<number> {
-    return foreign.call({ hello: { version: VERSION } });
+    return withForeign(foreign => foreign.hello());
   }
 
   // Supported native actions
@@ -152,7 +181,7 @@ export const foreign: ForeignInterface = new Foreign();
    * Exit the app with given error code.
    */
   export function exit(code: number = 0): Promise<void> {
-    return foreign.call({ exit: { code: code } });
+    return foreign.call({ exit: { code } });
   }
 
   /**

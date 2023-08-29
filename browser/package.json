@@ -1,18 +1,24 @@
 {
-  "name": "iosjs",
+  "name": "ji",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "My webpack project",
+  "main": "dist/lib.js",
+  "types": "dist/lib.d.ts",
   "dependencies": {},
   "devDependencies": {
+    "@webpack-cli/generators": "^3.0.7",
     "prettier": "^2.8.8",
-    "typescript": "^5.1.6",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "build": "tsc",
-    "prettier": "prettier --write src/*.ts"
+    "build": "webpack --mode=production --node-env=production",
+    "prettier": "prettier --write src/*.ts",
+    "build:dev": "webpack --mode=development",
+    "build:prod": "webpack --mode=production --node-env=production",
+    "watch": "webpack --watch"
   },
   "author": "",
   "license": "ISC"

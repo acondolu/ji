@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "module": "AMD",
-    "lib": ["dom", "es2017"],
-    "outDir": "../static",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "removeComments": true
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "module": "es6",
+    "target": "es6",
+    "allowJs": true,
+    "declaration": true,
+    "declarationDir": "dist"
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "files": ["src/lib.ts"]
 }

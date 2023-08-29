@@ -32,6 +32,7 @@ export type NativeAction =
 | { UIKit_UIDevice_current_isBatteryMonitoringEnabled_set: { value: boolean } }
 
 export interface ForeignInterface {
+  hello(): Promise<number>;
   call(msg: NativeAction): Promise<any>;
   log(message: string): void;
 }

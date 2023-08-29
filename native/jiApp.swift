@@ -5,6 +5,7 @@ struct jiApp: App {
     var body: some Scene {
         WindowGroup {
             WebView()
+//            ContentView()
         }
     }
 }

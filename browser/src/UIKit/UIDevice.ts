@@ -3,10 +3,10 @@
 import { NSObject } from "../ObjectiveC/NSObject";
 import { foreign } from "../Foreign";
 
-export default class UIDevice extends NSObject {
-  constructor() {
-    super();
-  }
+/**
+ * A representation of the current device.
+ */
+export class UIDevice extends NSObject {
   /**
    * The model of the device.
    */
@@ -16,7 +16,9 @@ export default class UIDevice extends NSObject {
 
   // Getting the device battery state
 
-  // TODO: UIDevice.current.isBatteryMonitoringEnabled = true
+  /**
+   * A Boolean value that indicates whether battery monitoring is enabled.
+   */
   isBatteryMonitoringEnabled = {
     set(value: boolean): Promise<boolean> {
       return foreign.call({ "UIKit_UIDevice_current_isBatteryMonitoringEnabled_set": { value } });
@@ -32,3 +34,6 @@ export default class UIDevice extends NSObject {
 }
 
 export const current = new UIDevice();
+
+// Make UIDevice unconstructable (breaks the TS contract)
+delete (UIDevice as any).prototype.constructor;
