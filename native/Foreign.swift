@@ -25,7 +25,7 @@ public class Foreign {
     public func recvCommand(command: Command<Native>) {
         switch command {
         case .call(let _id, let contents) :
-            let ret = runNativeAction(action: contents)
+            let ret = runNativeAction(_id: _id, action: contents)
             sendCommand(cmd: .ret(_id: _id, contents: ret))
         case .ret(let _id, let contents):
             if let promise = self.pending.removeValue(forKey: _id) {
@@ -36,6 +36,7 @@ public class Foreign {
                 case .RetBool(b: let b): promise(.success(b))
                 case .String(s: let string): promise(.success(string))
                 case .Float(f: let float): promise(.success(float))
+                case .Pointer(ptr: let ptr): promise(.success(ptr))
                 case .Error(reason: let reason): promise(.failure(BrowserError(reason: reason)))
                 }
             }
@@ -56,13 +57,18 @@ public class Foreign {
                 case .failure(let failure): return promise(.failure(failure))
                 }
             }
-            self.sendCommand(cmd: .call(_id: _id, contents: action));
+            self.sendCommand(cmd: .call(_id: _id, contents: action))
         };
         return try await future.value
     }
     
+    func callback(action: Browser.Action) {
+        let _id = UInt64(OSAtomicIncrement64(&n))
+        self.sendCommand(cmd: .call(_id: _id, contents: action))
+    }
+    
     // TODO: should probably also return any object to allocate in the table
-    func runNativeAction(action: Native.Action) -> Return<MyVoid> {
+    func runNativeAction(_id: UInt64, action: Native.Action) -> Return<MyVoid> {
         switch action {
         case .exit(let code):
             exit(code)
@@ -82,6 +88,10 @@ public class Foreign {
         case .UIKit_UIDevice_current_isBatteryMonitoringEnabled_set(value: let value):
             UIDevice.current.isBatteryMonitoringEnabled = value;
             return .RetBool(b: UIDevice.current.isBatteryMonitoringEnabled)
+        case .CoreBluetooth_CBCentralManager_new:
+            let ret = MyCBCentralManager(_id: _id, queue: nil)
+            refTable[_id] = ret;
+            return .Pointer(ptr: _id);
         }
     }
     

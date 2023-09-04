@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		65165C482AA22AA200EF431C /* MyCoreBluetooth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65165C472AA22AA200EF431C /* MyCoreBluetooth.swift */; };
 		65228BB12A98ADF4008B2106 /* MyTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65228BB02A98ADF4008B2106 /* MyTest.swift */; };
 		65323E5B2A8EEB2B00EA2C12 /* jiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65323E5A2A8EEB2B00EA2C12 /* jiApp.swift */; };
 		65323E5F2A8EEB2F00EA2C12 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 65323E5E2A8EEB2F00EA2C12 /* Assets.xcassets */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		65165C472AA22AA200EF431C /* MyCoreBluetooth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyCoreBluetooth.swift; sourceTree = "<group>"; };
 		65228BB02A98ADF4008B2106 /* MyTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTest.swift; sourceTree = "<group>"; };
 		65323E572A8EEB2B00EA2C12 /* ji.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ji.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		65323E5A2A8EEB2B00EA2C12 /* jiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = jiApp.swift; sourceTree = "<group>"; };
@@ -70,6 +72,7 @@
 				65323E602A8EEB2F00EA2C12 /* Preview Content */,
 				659012432A96BE320083506F /* Types.swift */,
 				65228BB02A98ADF4008B2106 /* MyTest.swift */,
+				65165C472AA22AA200EF431C /* MyCoreBluetooth.swift */,
 			);
 			path = native;
 			sourceTree = "<group>";
@@ -155,6 +158,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				659012442A96BE320083506F /* Types.swift in Sources */,
+				65165C482AA22AA200EF431C /* MyCoreBluetooth.swift in Sources */,
 				65323E6F2A90ACC600EA2C12 /* Foreign.swift in Sources */,
 				659012462A988F760083506F /* WebView.swift in Sources */,
 				65228BB12A98ADF4008B2106 /* MyTest.swift in Sources */,

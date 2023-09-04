@@ -10,7 +10,7 @@ export class UIDevice extends NSObject {
   /**
    * The model of the device.
    */
-  get model() {
+  get model(): Promise<string> {
     return call({ "UIKit_UIDevice_current_model_get": {} });
   }
 
@@ -28,7 +28,7 @@ export class UIDevice extends NSObject {
   /**
    * The battery charge level for the device.
    */
-  get batteryLevel() {
+  get batteryLevel(): Promise<number> {
     return call({ "UIKit_UIDevice_current_batteryLevel_get": {} });
   }
 }

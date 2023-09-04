@@ -1,14 +1,31 @@
-import { NativeAction, Native, Command, Browser, Return } from "./Types";
+import { CBCentralManager } from "./CoreBluetooth";
+import {
+  NativeAction,
+  Native,
+  Command,
+  Browser,
+  Return,
+  RemotePointer,
+} from "./Types";
 
-declare const FinalizationRegistry: any | undefined;
+declare class FinalizationRegistry<T, V> {
+  constructor(finalizer: (heldValue: V) => void);
+  register(target: T, heldValue: V): void;
+  // unregister(target: any): void;
+}
+
+declare class WeakRef<T> {
+  constructor(value: T);
+  deref(): T | undefined;
+}
 
 const VERSION = 0;
 
 class Foreign {
-  //
-  private ffi_registry: any;
-  private rpc_no: any = 0;
-  private rpcs: Map<
+  private remoteRegistry: FinalizationRegistry<any, number>;
+  private remoteMap: Map<number, WeakRef<any>>;
+  private commandNo: any = 0;
+  private inflightCommands: Map<
     number,
     { resolve: (value: any) => void; reject: (reason: any) => void }
   >;
@@ -16,43 +33,49 @@ class Foreign {
   private remoteLog: (message: string) => void;
 
   constructor() {
-    this.postMessage = (value) =>
-      (window as any).webkit?.messageHandlers?.nativeCallback?.postMessage(
-        value
-      );
     if (!(window as any).webkit?.messageHandlers?.nativeCallback?.postMessage) {
       throw Error(
         "Unsupported: window.webkit.messageHandlers.nativeCallback.postMessage"
       );
     }
-    this.remoteLog = (message) =>
-      (window as any).webkit?.messageHandlers?.nativeLogger?.postMessage(
-        message
-      );
     if (!(window as any).webkit?.messageHandlers?.nativeLogger?.postMessage) {
       throw Error(
         "Unsupported: window.webkit.messageHandlers.nativeLogger.postMessage"
       );
     }
+    this.postMessage = (value) =>
+      (window as any).webkit?.messageHandlers?.nativeCallback?.postMessage(
+        value
+      );
+    this.remoteLog = (message) =>
+      (window as any).webkit?.messageHandlers?.nativeLogger?.postMessage(
+        message
+      );
     if (!FinalizationRegistry) {
       throw Error("Unsupported: FinalizationRegistry");
     }
-    this.ffi_registry = new FinalizationRegistry(async (id: number) => {
+    if (!WeakRef) {
+      throw Error("Unsupported: WeakRef");
+    }
+    this.remoteRegistry = new FinalizationRegistry(async (id: number) => {
+      this.remoteMap.delete(id);
       await this.call({ free: { id } });
     });
-    this.rpcs = new Map();
+    this.remoteMap = new Map();
+    this.inflightCommands = new Map();
   }
 
-  // private alloc(id: number, value: any) {
-  //   this.ffi_registry.register(value, id);
-  // }
+  register<T>(id: RemotePointer<T>, value: T) {
+    this.remoteRegistry.register(value, id);
+    this.remoteMap.set(id, new WeakRef(value));
+  }
 
   /**
    * Process a command sent from the native app.
    */
   private recv(cmd: Command<Browser>): void {
     this.log(`recv(${JSON.stringify(cmd)})`);
-    const { key, value } = tag(cmd);
+    const { key, value } = tag(cmd)!;
     switch (key) {
       case "ret": {
         const { _id, contents } = value;
@@ -62,27 +85,27 @@ class Foreign {
       case "call": {
         const { _id, contents } = value;
         const ret = this.runBrowserAction(contents);
-        this.ret(_id, ret);
+        if (ret) this.ret(_id, ret);
       }
     }
   }
 
   private recvRet(_id: number, contents: Return<void>) {
     const resolve = (value: any) => {
-      const resolve = this.rpcs.get(_id)?.resolve;
+      const resolve = this.inflightCommands.get(_id)?.resolve;
       if (resolve) {
-        this.rpcs.delete(_id);
+        this.inflightCommands.delete(_id);
         resolve(value);
       }
     };
     const reject = (reason: any) => {
-      const reject = this.rpcs.get(_id)?.reject;
+      const reject = this.inflightCommands.get(_id)?.reject;
       if (reject) {
-        this.rpcs.delete(_id);
+        this.inflightCommands.delete(_id);
         reject(reason);
       }
     };
-    const { key, value } = tag<Return<void>>(contents);
+    const { key, value } = tag<Return<void>>(contents)!;
     switch (key) {
       case "Void":
         return resolve(undefined);
@@ -98,6 +121,8 @@ class Foreign {
         return resolve(value.f);
       case "RetBool":
         return resolve(value.b);
+      case "Pointer":
+        return resolve(value.ptr);
       default:
         this.log(`recvRet: unknown command: ${JSON.stringify(contents)}`);
     }
@@ -106,26 +131,39 @@ class Foreign {
   /**
    * Implements the browser actions that can be called from the native app.
    */
-  private runBrowserAction(action: Browser["Action"]): Return<void> {
-    const { key, value } = tag(action);
+  private runBrowserAction(action: Browser["Action"]): Return<void> | void {
+    const { key, value } = tag(action)!;
     switch (key) {
       case "alert":
         alert(value.message);
         return { Void: {} };
+      case "CoreBluetooth_centralManagerDidUpdateState": {
+        const obj = this.getObj<CBCentralManager>(value.ptr);
+        obj?.delegate?.centralManagerDidUpdateState(obj);
+        return;
+      }
       default:
         return {
           RetError: {
-            reason: `Unknwon browser action: ${JSON.stringify(action)}.`,
+            reason: `Unknown browser action: ${JSON.stringify(action)}.`,
           },
         };
     }
   }
 
+  getObj<T>(ptr: RemotePointer<T>): T | undefined {
+    const ret = this.remoteMap.get(ptr)?.deref();
+    if (!ret) {
+      this.remoteMap.delete(ptr);
+    }
+    return ret;
+  }
+
   call(action: NativeAction): Promise<any> {
-    this.rpc_no = this.rpc_no + 1;
-    const _id: number = this.rpc_no;
+    this.commandNo = this.commandNo + 1;
+    const _id: number = this.commandNo;
     return new Promise((resolve, reject) => {
-      this.rpcs.set(_id, { resolve, reject });
+      this.inflightCommands.set(_id, { resolve, reject });
       this.send({ call: { _id, contents: action } });
     });
   }
@@ -145,9 +183,8 @@ class Foreign {
 
   hello(): Promise<number> {
     document.addEventListener(
-      "jirecv",
+      "jirecv" as any,
       (e: CustomEvent) => {
-        this.log(`XrecvX ${e}`);
         this.recv(e.detail);
       },
       false
@@ -157,13 +194,13 @@ class Foreign {
 }
 
 let foreign: Foreign | null = mkForeign();
-export let error: Error = null;
+export let error: Error | null = null;
 
 function mkForeign(): Foreign | null {
   try {
     return new Foreign();
   } catch (e) {
-    error = e;
+    error = e as Error;
     return null;
   }
 }
@@ -172,7 +209,9 @@ function withForeign<T>(act: (foreign: Foreign) => Promise<T>): Promise<T> {
   if (foreign) {
     return act(foreign);
   } else {
-    return Promise.reject(new Error(`ji: not available (${error.toString()})`));
+    return Promise.reject(
+      new Error(`ji: not available (${error?.toString()})`)
+    );
   }
 }
 
@@ -190,6 +229,11 @@ export function log(message: string) {
 
 export function call(action: NativeAction): Promise<any> {
   return withForeign((foreign) => foreign.call(action));
+}
+
+export function register<T>(id: RemotePointer<T>, value: T): T {
+  if (foreign) foreign.register(id, value);
+  return value;
 }
 
 type TaggedProperty<T> = {

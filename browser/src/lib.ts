@@ -1,5 +1,6 @@
 import * as Foreign from "./Foreign";
 import UIKit from "./UIKit";
+import CoreBluetooth from "./CoreBluetooth";
 
 const ji = {
   /**
@@ -16,6 +17,7 @@ const ji = {
    */
   exit: Foreign.exit,
   UIKit: UIKit,
+  CoreBluetooth: CoreBluetooth,
 };
 
 declare global {

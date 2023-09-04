@@ -6,7 +6,8 @@
     "target": "es6",
     "allowJs": true,
     "declaration": true,
-    "declarationDir": "dist"
+    "declarationDir": "dist",
+    "strict": true
   },
   "files": ["src/lib.ts"]
 }

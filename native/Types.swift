@@ -33,15 +33,19 @@ public enum NativeAction: Decodable {
     case UIKit_UIDevice_current_model_get;
     case UIKit_UIDevice_current_batteryLevel_get;
     case UIKit_UIDevice_current_isBatteryMonitoringEnabled_set(value: Bool);
+    case CoreBluetooth_CBCentralManager_new;
 }
 
 public enum BrowserAction: Encodable {
     case alert(message: String);
+    case CoreBluetooth_centralManagerDidUpdateState(ptr: UInt64);
 }
 
 struct BrowserError: Error {
     var reason: String;
 }
+
+public typealias ForeignPointer<T> = UInt64;
 
 public enum Return<T> {
     case Void;
@@ -50,6 +54,7 @@ public enum Return<T> {
     case Float(f: Float);
     case RetBool(b: Bool);
     case String(s: String);
+    case Pointer(ptr: ForeignPointer<Any>);
     case Error(reason: String);
 //    case complex(T);
 }
